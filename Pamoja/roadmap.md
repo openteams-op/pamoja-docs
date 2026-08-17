@@ -48,7 +48,6 @@ gantt
 | FEAT-025 | Channel visibility | Customers are friends, not rows in a CRM |
 | FEAT-028 | App lock | Money and chats stay safe on a lost phone |
 | FEAT-029 | Block, report & scam response | The network is safe from the first real transaction |
-| FEAT-032 | Push notifications | No one misses an order or a payment |
 
 ## Phase 2: Business Module — Launch Wedge
 
@@ -73,6 +72,7 @@ gantt
 | FEAT-024 | Business content search | Find the product, not just the shop |
 | FEAT-020 | Inventory management | No more overselling what's not in the shop |
 | FEAT-021 | Delivery tracking | Both sides know where the goods are |
+| FEAT-032 | Push notifications | No one misses a message, an order, or a payment |
 | FEAT-022 | Merchant analytics | Sales numbers a trader can act on or show a lender |
 
 ## Phase 3: Social Module — Community Layer
