@@ -174,7 +174,7 @@ graph TD
 
 ```mermaid
 graph TD
-    A[Search (rail)] --> B[Type Query]
+    A["Search (rail)"] --> B["Type Query"]
     B --> C[Results Load]
     C --> D[Grouped Results: Channels / People / Messages]
     D --> E{What does user open?}
@@ -419,7 +419,7 @@ graph TD
 
 ```mermaid
 graph TD
-    A[Wallet (rail)] --> B[Tap Fund Wallet]
+    A["Wallet (rail)"] --> B[Tap Fund Wallet]
     B --> C[Wallet Funding sheet]
     C --> D[Choose Method: Bank Transfer / Card / USSD]
     D --> E[Partner Payment Flow]
@@ -460,7 +460,7 @@ graph TD
 
 ```mermaid
 graph TD
-    A[Feed (rail)] --> B[Tap Compose]
+    A["Feed (rail)"] --> B[Tap Compose]
     B --> C[Post Editor sheet]
     C --> D[Add Photo / Text]
     D --> E[Publish]
