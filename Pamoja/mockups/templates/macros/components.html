@@ -1,0 +1,39 @@
+{# Reusable UI atoms as Jinja2 macros.
+   Import on any screen with: {% import "macros/components.html" as c %} #}
+
+{% macro btn(label, variant='primary', href=None, extra_class='') %}
+  {% if href %}
+    <a href="{{ href }}" class="btn btn-{{ variant }} {{ extra_class }}">{{ label }}</a>
+  {% else %}
+    <button type="button" class="btn btn-{{ variant }} {{ extra_class }}">{{ label }}</button>
+  {% endif %}
+{% endmacro %}
+
+{% macro input(label, name='', type='text', placeholder='', autocomplete='off', value='') %}
+  <label class="field">
+    <span class="field__label">{{ label }}</span>
+    <input class="input" type="{{ type }}" name="{{ name }}" placeholder="{{ placeholder }}" autocomplete="{{ autocomplete }}" value="{{ value }}">
+  </label>
+{% endmacro %}
+
+{# Use with: {% call c.card() %}...{% endcall %} #}
+{% macro card(extra_class='') %}
+  <div class="card card--padded {{ extra_class }}">{{ caller() }}</div>
+{% endmacro %}
+
+{# Asset image with branded placeholder fallback until the real file lands.
+   path is relative to static/, e.g. "assets/01-onboarding/step-phone.png".
+   data-prompt stays on the element for the manifest/reviewers; the placeholder shows only the label. #}
+{% macro img_asset(path, alt, prompt='') %}
+  <img src="{{ url_for('static', filename=path) }}" alt="{{ alt }}" data-asset="{{ alt }}"
+       data-prompt="{{ prompt }}"
+       onerror="this.onerror=null; this.src = PLACEHOLDER_SVG(this.dataset.asset)">
+{% endmacro %}
+
+{# Standard icon from the CDN pack loaded in base.html (Phosphor per branding.md:
+   <i class="ph ph-NAME">). Filled variants add the "ph-fill" class via extra_class.
+   Only custom/brand icons or shapes (e.g. the Pamoja knot logo) are hand-authored
+   inline SVG, never generated as image files. #}
+{% macro icon(name, extra_class='') %}
+  <i class="ph ph-{{ name }} {{ extra_class }}" aria-hidden="true"></i>
+{% endmacro %}

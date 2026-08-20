@@ -1,0 +1,18 @@
+{# Fixed overlay review toolbar. Included once by base.html; hidden by ?chrome=off. #}
+<aside class="review-chrome" data-chrome>
+  <span>
+    <strong>{{ product_name | default('Pamoja') }}</strong>
+    · {{ screen_title | default(screen_name) }}
+    {% if screen_route is defined %}<small>({{ screen_route }})</small>{% endif %}
+  </span>
+  {% if screens and screen_name %}
+    {% set idx = screens.index(screen_name) if screen_name in screens else -1 %}
+    {% if idx > 0 %}<a href="/screens/{{ screens[idx - 1] }}">Prev</a>{% endif %}
+    <a href="/">Index</a>
+    {% if idx >= 0 and idx < (screens | length - 1) %}<a href="/screens/{{ screens[idx + 1] }}">Next</a>{% endif %}
+  {% endif %}
+  <button type="button" data-theme-toggle aria-pressed="true">Dark</button>
+  <span data-state-switcher></span>
+  {# Link to the current screen's manifest; the gallery links to the shared one. #}
+  <a href="{% if screen_name %}/static/assets/{{ screen_name }}/manifest.md{% else %}/static/assets/shared/manifest.md{% endif %}" target="_blank">Manifest</a>
+</aside>

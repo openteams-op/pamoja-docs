@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pamoja — Mockup Gallery</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style type="text/tailwindcss">
+    :root {
+      --primary: #A16207;
+      --primary-hover: #854D0E;
+      --primary-light: #FEF3C7;
+      --primary-contrast: #FFFFFF;
+      --surface: #FAF9F7;
+      --surface-2: #F5F4F2;
+      --surface-elevated: #FFFFFF;
+      --text-1: #1C1917;
+      --text-2: #57534E;
+      --text-3: #8B857F;
+      --border: #E7E5E4;
+      --success: #15803D;
+      --warning: #C2410C;
+      --error: #B91C1C;
+      --info: #0F766E;
+      --shadow-1: 0 1px 2px rgb(28 25 23 / .06);
+      --shadow-2: 0 4px 12px rgb(28 25 23 / .08);
+    }
+    [data-theme="dark"] {
+      --primary: #FBBF24;
+      --primary-hover: #FCD34D;
+      --primary-light: #422006;
+      --primary-contrast: #1C1917;
+      --surface: #1C1917;
+      --surface-2: #292524;
+      --surface-elevated: #332E2A;
+      --text-1: #FAFAF9;
+      --text-2: #A8A29E;
+      --text-3: #79716B;
+      --border: #44403C;
+      --success: #4ADE80;
+      --warning: #FB923C;
+      --error: #F87171;
+      --info: #2DD4BF;
+      --shadow-1: 0 1px 2px rgb(0 0 0 / .4);
+      --shadow-2: 0 4px 12px rgb(0 0 0 / .5);
+    }
+    @theme inline {
+      --color-primary: var(--primary);
+      --color-primary-light: var(--primary-light);
+      --color-primary-contrast: var(--primary-contrast);
+      --color-surface: var(--surface);
+      --color-surface-2: var(--surface-2);
+      --color-surface-elevated: var(--surface-elevated);
+      --color-text-1: var(--text-1);
+      --color-text-2: var(--text-2);
+      --color-text-3: var(--text-3);
+      --color-border: var(--border);
+      --color-success: var(--success);
+      --color-warning: var(--warning);
+      --color-error: var(--error);
+      --color-info: var(--info);
+      --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+      --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    body { margin: 0; background: var(--surface); color: var(--text-1); font-family: var(--font-body); }
+    .gallery-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 32px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .gallery-header h1 { margin: 0; font-size: 20px; font-family: var(--font-display); }
+    .gallery-header p { margin: 4px 0 0; color: var(--text-2); font-size: 14px; }
+    .gallery-header button, .gallery-header a { border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; background: var(--surface); color: var(--text-1); text-decoration: none; font-size: 13px; cursor: pointer; }
+    .gallery-section { padding: 32px; }
+    .gallery-sub { margin: 0 0 20px; color: var(--text-2); font-size: 13px; max-width: 720px; }
+    .navmap-flow { max-width: 1100px; overflow-x: auto; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+
+    /* shared component classes (mirrors base.html so the live gallery renders identically) */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 0 24px; height: 48px; font-weight: 500; text-decoration: none; border: none; cursor: pointer; font-family: var(--font-body); }
+    .btn-primary { background: var(--primary); color: var(--primary-contrast); }
+    .btn-secondary { background: var(--primary-light); color: var(--primary); }
+    .btn-outline { background: transparent; color: var(--text-1); border: 1.5px solid var(--primary); }
+    .btn-ghost { background: transparent; color: var(--text-1); }
+    .btn-destructive { background: var(--error); color: #fff; }
+    .input { width: 100%; height: 48px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); padding: 0 16px; color: var(--text-1); font-family: var(--font-body); }
+    .input:focus { border-color: var(--primary); background: var(--surface); outline: none; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field__label { font-size: 13px; color: var(--text-2); }
+    .card { border-radius: 16px; background: var(--surface-elevated); border: 1px solid var(--border); padding: 16px; box-shadow: var(--shadow-1); }
+    .h1 { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--text-1); }
+    .h2 { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text-1); }
+    .empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 64px 24px; text-align: center; }
+    .icon { width: 20px; height: 20px; }
+    .channel-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; position: relative; background: var(--primary-light); }
+    .channel-row::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: var(--primary); }
+    .unread-badge { min-width: 18px; height: 18px; padding: 0 6px; border-radius: 9999px; background: var(--primary); color: var(--primary-contrast); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+    .verified-badge { width: 20px; height: 20px; border-radius: 9999px; background: var(--surface-elevated); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; }
+    .status-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 500; background: var(--success); color: #fff; }
+    .rail { width: 56px; background: var(--surface-2); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: stretch; padding: 8px 6px; gap: 2px; border-radius: 12px; }
+    .rail__item { display: flex; align-items: center; justify-content: center; padding: 12px 8px; border-radius: 10px; color: var(--text-2); position: relative; }
+    .rail__item .ph { font-size: 22px; color: var(--text-2); }
+    .rail__item--active { background: var(--primary-light); }
+    .rail__item--active::before { content: ""; position: absolute; left: -6px; top: 6px; bottom: 6px; width: 3px; border-radius: 3px; background: var(--primary); }
+    .rail__item--active .ph { color: var(--primary); }
+    .rail__unread-dot { position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; border-radius: 9999px; background: var(--primary); }
+
+    /* Flex, not grid: cards are fixed-size, so grid's 1fr cells would stretch and leave dead
+       space around each frame. Flex-wrap + space-around distributes them evenly and wraps. */
+    .frame-grid { display: flex; flex-wrap: wrap; justify-content: space-around; row-gap: 48px; padding: 32px; }
+    .frame-card { display: block; text-decoration: none; color: inherit; }
+    .frame-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+
+    /* Cards are plain fixed-size panes (display:block so width/height/overflow actually apply).
+       The screen page itself IS the device — the phone frame (bezel, notch, status bar) is drawn
+       by base.html — so the card must NOT draw a second bezel/notch: that produces a double phone
+       frame. The pane is exactly the full page (414x868 = 390 phone + bezel padding) scaled to a
+       fixed phone size (0.6 -> 248x521). Cards sit side by side; the grid wraps responsively. */
+    .frame-card--phone .frame-card__pane { display: block; width: 248px; height: 521px; overflow: hidden; border-radius: 28px; box-shadow: 0 12px 32px rgb(0 0 0 / .45); }
+    .frame-card--phone .frame-card__pane iframe { width: 414px; height: 868px; border: 0; display: block; transform: scale(0.6); transform-origin: 0 0; pointer-events: none; }
+
+    /* Desktop: pane = the full browser page (authored ~1280x800) scaled to a fixed size. */
+    .frame-card--desktop .frame-card__pane { display: block; width: 384px; height: 240px; overflow: hidden; border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 12px 32px rgb(0 0 0 / .25); }
+    .frame-card--desktop .frame-card__pane iframe { width: 1280px; height: 800px; border: 0; display: block; transform: scale(0.3); transform-origin: 0 0; pointer-events: none; }
+
+    .frame-card__label { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; font-size: 13px; color: var(--text-1); }
+    .frame-card__label .frame-card__name { font-size: 13px; font-weight: 600; color: var(--text-1); }
+    .frame-card__label .frame-card__purpose { font-size: 11px; color: var(--text-2); }
+    .frame-card__label .frame-card__route { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+    .frame-card:hover .frame-card__pane { filter: brightness(1.05); }
+
+    /* ===== shared components + design system showcase ===== */
+    .showcase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    .showcase-card { border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); padding: 18px; }
+    .showcase-card h3 { margin: 0 0 12px; font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .06em; }
+    .swatch-row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .swatch { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; color: var(--text-2); }
+    .swatch__chip { width: 52px; height: 52px; border-radius: 12px; border: 1px solid var(--border); }
+    .swatch__name { font-size: 11px; }
+    .type-row { display: flex; align-items: baseline; gap: 12px; border-bottom: 1px solid var(--border); padding: 8px 0; }
+    .type-row .label { width: 90px; flex-shrink: 0; font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="gallery-header">
+    <div>
+      <h1>Pamoja — Mockup Gallery</h1>
+      <p>Click a frame to open the screen. Only screens built in this pass are shown.</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button type="button" id="theme-toggle" aria-pressed="true">Dark</button>
+      <a href="/static/assets/shared/manifest.md" target="_blank">Asset manifest</a>
+    </div>
+  </header>
+
+  {% set meta = {
+    '01-onboarding': ('Onboarding', 'Create account, verify phone, build channel, choose modules — one flow, four steps.', '/onboarding')
+  } %}
+
+  <main class="frame-grid">
+    {# Use frame-card--phone for mobile screens, frame-card--desktop for web/desktop
+       screens, per the Platform field in screens.md. The page itself is the device, so
+       the card is just a fixed-size pane — no second bezel/notch. #}
+    {% for name in screens %}
+    {% set label, purpose, route = meta.get(name, (name, '', '/screens/' ~ name)) %}
+    <a class="frame-card frame-card--phone" href="/screens/{{ name }}" aria-label="Open {{ label }}">
+      <span class="frame-card__pane">
+        <iframe src="/screens/{{ name }}?chrome=off" tabindex="-1" aria-hidden="true"></iframe>
+      </span>
+      <span class="frame-card__label">
+        <span class="frame-card__name">{{ label }}</span>
+        <span class="frame-card__purpose">{{ purpose }}</span>
+        <span class="frame-card__route">{{ route }}</span>
+      </span>
+    </a>
+    {% endfor %}
+  </main>
+
+  <section class="gallery-section" style="border-top:1px solid var(--border);">
+    <h2 class="h2" style="margin:0 0 4px;">Navigation Map</h2>
+    <p class="gallery-sub">Screen flow from screens.md's Navigation Map — a Mermaid flow diagram, re-rendered in the current theme. Screens not yet built in this pass are shown for context only.</p>
+    <div class="navmap-flow" id="navmap" role="img" aria-label="Navigation map"></div>
+  </section>
+
+  {# The Mermaid graph definition — authored from screens.md's Navigation Map (routes in <>),
+     grouped by flow with decision nodes. Kept as raw text so the theme toggle can re-render it. #}
+  <pre id="navmap-source" hidden>
+graph TD
+  A["Onboarding<br/><b>/onboarding</b>"] --> B{Authenticated?}
+  B -->|Yes| C["Chats<br/><b>/chats</b>"]
+  B -->|No| A
+  C -->|Rail| D["Search<br/><b>/search</b>"]
+  C -->|Rail| E["Feed<br/><b>/feed</b>"]
+  C -->|Rail| F["Wallet<br/><b>/wallet</b>"]
+  C -->|Rail| G["My Channel<br/><b>/channel</b>"]
+  C -->|Tap chat| H["Chat Thread<br/><b>/chat/:id</b>"]
+  D -->|Tap result| I["Channel Profile<br/><b>/channel/:id</b>"]
+  E -->|Tap channel| I
+  F -->|Scan QR / Transfer| H
+  G -->|View another's channel| I
+  I -->|Message| H
+  G -->|Settings entry| J["Settings<br/><b>/settings</b>"]
+  G -->|Rail footer| J
+  E -->|Compose| K["Post Editor sheet"]
+  F -->|Fund / Transfer / QR| L["Funding / Transfer / QR sheets"]
+  </pre>
+
+  <section class="gallery-section" style="border-top:1px solid var(--border);">
+    <h2 class="h2" style="margin:0 0 4px;">Shared / Common Components</h2>
+    <p class="gallery-sub">Live renders of the shared component set from screens.md — the same classes every screen uses (defined once in base.html).</p>
+    {% import "macros/components.html" as c %}
+    <div class="showcase-grid">
+      <div class="showcase-card">
+        <h3>Buttons</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn btn-primary">Primary</button>
+          <button class="btn btn-secondary">Secondary</button>
+          <button class="btn btn-outline">Outline</button>
+          <button class="btn btn-ghost">Ghost</button>
+          <button class="btn btn-destructive">Destructive</button>
+        </div>
+      </div>
+      <div class="showcase-card">
+        <h3>Form input</h3>
+        {{ c.input('Phone number', 'phone', 'tel', '+234 800 000 0000') }}
+      </div>
+      <div class="showcase-card">
+        <h3>Card</h3>
+        {% call c.card() %}<p style="margin:0; color:var(--text-2); font-size:14px;">Reusable card content via the caller block.</p>{% endcall %}
+      </div>
+      <div class="showcase-card">
+        <h3>Icons (Phosphor CDN)</h3>
+        <div style="display:flex; gap:14px; align-items:center;">
+          {{ c.icon('chat-circle-dots') }}{{ c.icon('magnifying-glass') }}{{ c.icon('newspaper') }}{{ c.icon('wallet') }}{{ c.icon('storefront') }}{{ c.icon('gear') }}
+        </div>
+      </div>
+      <div class="showcase-card">
+        <h3>Channel row (active) + unread badge</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div class="channel-row"><span class="avatar">A</span><span style="font-size:14px;">Amina's Corner</span><span class="unread-badge">3</span></div>
+        </div>
+      </div>
+      <div class="showcase-card">
+        <h3>Verified badge + status chip</h3>
+        <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-start;">
+          <span class="verified-badge">{{ c.icon('check', 'ph-fill') }}</span>
+          <span class="status-chip">{{ c.icon('check', 'ph-fill') }} Delivered</span>
+        </div>
+      </div>
+      <div class="showcase-card">
+        <h3>Side Rail (shared nav shell)</h3>
+        <div style="display:flex; gap:16px; align-items:stretch;">
+          <div class="rail">
+            <div class="rail__item rail__item--active">{{ c.icon('chat-circle-dots') }}<span class="rail__unread-dot"></span></div>
+            <div class="rail__item">{{ c.icon('magnifying-glass') }}</div>
+            <div class="rail__item">{{ c.icon('newspaper') }}</div>
+            <div class="rail__item">{{ c.icon('wallet') }}</div>
+            <div class="rail__item">{{ c.icon('storefront') }}</div>
+          </div>
+          <p style="margin:0; color:var(--text-2); font-size:13px; align-self:center;">Icon-first 56px rail on narrow phones; expands to icon+label on wider screens. Used on all in-frame screens.</p>
+        </div>
+      </div>
+      <div class="showcase-card">
+        <h3>Empty state</h3>
+        <div class="empty-state" style="padding:24px;">
+          <h2 class="h2">No chats yet</h2>
+          <p style="color:var(--text-2); font-size:14px; margin:0;">Invite your contacts and get started.</p>
+          <button class="btn btn-secondary">Invite contacts</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="gallery-section" style="border-top:1px solid var(--border);">
+    <h2 class="h2" style="margin:0 0 4px;">Design System</h2>
+    <p class="gallery-sub">Token showcase from branding.md — colors and type, live in both themes. Dark is the brand default; toggle to light above.</p>
+    <div class="showcase-grid">
+      <div class="showcase-card">
+        <h3>Colors</h3>
+        <div class="swatch-row">
+          {% set colors = [
+            ('primary', 'var(--primary)'), ('primary-light', 'var(--primary-light)'),
+            ('surface', 'var(--surface)'), ('surface-2', 'var(--surface-2)'), ('surface-elevated', 'var(--surface-elevated)'),
+            ('text-1', 'var(--text-1)'), ('text-2', 'var(--text-2)'), ('text-3', 'var(--text-3)'),
+            ('border', 'var(--border)'), ('success', 'var(--success)'), ('warning', 'var(--warning)'),
+            ('error', 'var(--error)'), ('info', 'var(--info)')
+          ] %}
+          {% for name, value in colors %}
+          <span class="swatch"><span class="swatch__chip" style="background:{{ value }};"></span><span class="swatch__name">{{ name }}</span></span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="showcase-card">
+        <h3>Typography</h3>
+        <div class="type-row"><span class="label">display</span><span class="h1">Together is everything</span></div>
+        <div class="type-row"><span class="label">h2</span><span class="h2">Heading two</span></div>
+        <div class="type-row"><span class="label">body</span><span>Body text in Inter.</span></div>
+        <div class="type-row"><span class="label">mono</span><span style="font-family:var(--font-mono);">₦ 12,500.00 · TXN-8F2K1</span></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    var mermaidLoaded = false;
+    function renderNavMap() {
+      if (!window.mermaid || !mermaidLoaded) return;
+      var dark = document.documentElement.dataset.theme === 'dark';
+      mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'loose' });
+      var host = document.getElementById('navmap');
+      var src = document.getElementById('navmap-source').textContent;
+      mermaid.render('navmap-svg', src).then(function (res) { host.innerHTML = res.svg; });
+    }
+
+    /* push the current theme into every frame so the screens follow the gallery toggle */
+    function propagateTheme() {
+      var theme = document.documentElement.dataset.theme;
+      Array.prototype.forEach.call(document.querySelectorAll('.frame-card iframe'), function (f) {
+        if (f.contentWindow) f.contentWindow.postMessage({ type: 'mockup-theme', theme: theme }, '*');
+      });
+    }
+
+    document.getElementById('theme-toggle').addEventListener('click', function () {
+      var html = document.documentElement;
+      var dark = html.dataset.theme === 'dark';
+      html.dataset.theme = dark ? 'light' : 'dark';
+      this.setAttribute('aria-pressed', String(!dark));
+      this.textContent = dark ? 'Dark' : 'Light';
+      renderNavMap();
+      propagateTheme();
+    });
+
+    if (window.mermaid) { mermaidLoaded = true; renderNavMap(); }
+    propagateTheme();
+  </script>
+</body>
+</html>

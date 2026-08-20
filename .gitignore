@@ -1,2 +1,4 @@
 # Local Obsidian editor state — not part of the sealed documentation set
 .obsidian/
+# Flask mockups bytecode
+__pycache__/

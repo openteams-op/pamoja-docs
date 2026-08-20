@@ -1,0 +1,23 @@
+{# Shared nav shell — the Pamoja Side Rail from screens.md (used on all in-frame screens:
+   Chats, Search, Feed, Wallet, My Channel). Onboarding is the only screen OUTSIDE the frame
+   and does NOT include this rail. In-frame screens include this partial inside their content
+   area (left rail + content column), not via the bottom_nav block.
+
+   Icons come from the Phosphor CDN loaded in base.html via the c.icon() macro.
+   Active = primary-light bg + 3px primary indicator bar; unread dot on Chats. #}
+{% import "macros/components.html" as c %}
+<nav class="rail" aria-label="Side rail">
+  <a href="/screens/02-chats" class="rail__item rail__item--active" aria-current="page">
+    {{ c.icon('chat-circle-dots') }}<span>Chats</span>
+    <span class="rail__unread-dot" aria-hidden="true"></span>
+  </a>
+  <a href="/screens/04-search" class="rail__item">{{ c.icon('magnifying-glass') }}<span>Search</span></a>
+  <a href="/screens/05-feed" class="rail__item">{{ c.icon('newspaper') }}<span>Feed</span></a>
+  <a href="/screens/06-wallet" class="rail__item">{{ c.icon('wallet') }}<span>Wallet</span></a>
+  <a href="/screens/07-my-channel" class="rail__item">{{ c.icon('storefront') }}<span>Channel</span></a>
+  <span class="rail__spacer"></span>
+  {# User avatar + Settings pinned at the rail's bottom #}
+  <a href="/screens/09-settings" class="rail__item" aria-label="Settings">
+    {{ c.icon('gear') }}<span>Settings</span>
+  </a>
+</nav>

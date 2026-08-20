@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ product_name | default('Pamoja') }}{% endblock %}</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- Google Fonts (CDN): Space Grotesk (display), Inter (body), JetBrains Mono (amounts/IDs) per branding.md -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Icon pack (CDN): Phosphor per branding.md Icon Library (filled, rounded, 2px effective stroke).
+       Usage: <i class="ph ph-NAME"></i>; filled variants add the "ph-fill" class. -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style type="text/tailwindcss">
+    /* ===== design tokens from branding.md — light AND dark, every token ===== */
+    :root {
+      --primary: #A16207;
+      --primary-hover: #854D0E;
+      --primary-light: #FEF3C7;
+      --primary-contrast: #FFFFFF;      /* text on primary buttons (light mode) */
+      --surface: #FAF9F7;
+      --surface-2: #F5F4F2;             /* surface-secondary */
+      --surface-elevated: #FFFFFF;
+      --text-1: #1C1917;                /* text-primary */
+      --text-2: #57534E;                /* text-secondary */
+      --text-3: #8B857F;                /* text-muted */
+      --border: #E7E5E4;
+      --success: #15803D;
+      --warning: #C2410C;
+      --error: #B91C1C;
+      --info: #0F766E;
+      --shadow-1: 0 1px 2px rgb(28 25 23 / .06);
+      --shadow-2: 0 4px 8px rgb(28 25 23 / .08);
+      --shadow-3: 0 12px 28px rgb(28 25 23 / .12);
+    }
+    [data-theme="dark"] {
+      --primary: #FBBF24;
+      --primary-hover: #FCD34D;
+      --primary-light: #422006;
+      --primary-contrast: #1C1917;      /* dark gold buttons carry near-black text (WCAG AA) */
+      --surface: #1C1917;
+      --surface-2: #292524;
+      --surface-elevated: #332E2A;
+      --text-1: #FAFAF9;
+      --text-2: #A8A29E;
+      --text-3: #79716B;
+      --border: #44403C;
+      --success: #4ADE80;
+      --warning: #FB923C;
+      --error: #F87171;
+      --info: #2DD4BF;
+      --shadow-1: 0 1px 2px rgb(0 0 0 / .4);
+      --shadow-2: 0 4px 8px rgb(0 0 0 / .5);
+      --shadow-3: 0 12px 32px rgb(0 0 0 / .7);
+    }
+    @theme inline {
+      --color-primary: var(--primary);
+      --color-primary-hover: var(--primary-hover);
+      --color-primary-light: var(--primary-light);
+      --color-primary-contrast: var(--primary-contrast);
+      --color-surface: var(--surface);
+      --color-surface-2: var(--surface-2);
+      --color-surface-elevated: var(--surface-elevated);
+      --color-text-1: var(--text-1);
+      --color-text-2: var(--text-2);
+      --color-text-3: var(--text-3);
+      --color-border: var(--border);
+      --color-success: var(--success);
+      --color-warning: var(--warning);
+      --color-error: var(--error);
+      --color-info: var(--info);
+      --shadow-sm: var(--shadow-1);
+      --shadow-md: var(--shadow-2);
+      --shadow-lg: var(--shadow-3);
+      --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+      --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+
+    /* ===== component tokens from branding.md → reusable classes ===== */
+    /* Buttons: height 48px (button-height), radius-md (10px), padding 16px 24px.
+       NOTE: @apply can only reference real Tailwind utilities — never a custom class.
+       Each variant therefore lists the full base utility set, never `@apply btn`. */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 0 24px; height: 48px; font-weight: 500; transition: background-color 150ms ease-out, color 150ms ease-out; cursor: pointer; user-select: none; border: none; text-decoration: none; box-sizing: border-box; }
+    .btn-primary { background: var(--primary); color: var(--primary-contrast); }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--primary-light); color: var(--primary); }
+    .btn-secondary:hover { filter: brightness(0.97); }
+    .btn-outline { background: transparent; color: var(--text-1); border: 1.5px solid var(--primary); }
+    .btn-outline:hover { background: var(--primary-light); }
+    .btn-ghost { background: transparent; color: var(--text-1); }
+    .btn-ghost:hover { background: var(--surface-2); }
+    .btn-destructive { background: var(--error); color: #FFFFFF; }
+    .btn[disabled], .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn .ph { font-size: 20px; }
+
+    /* Inputs: height 48px (input-height), radius-md, border, surface-secondary bg */
+    .input { @apply w-full h-12 rounded-[10px] border border-border bg-surface-2 px-4 text-text-1 placeholder:text-text-3; }
+    .input:focus { @apply border-primary bg-surface outline-none ring-2 ring-primary/20; }
+    .input--error { @apply border-error bg-surface; }
+    .input:disabled { @apply border-border bg-surface-2 text-text-3; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field__label { font-size: 13px; color: var(--text-2); }
+    .field__error { font-size: 12px; color: var(--error); }
+    .card { @apply rounded-[16px] bg-surface-elevated border border-border shadow-sm; }
+    .card--padded { @apply p-4; }
+
+    /* Chat & channel components (branding.md) — defined once here for all screens */
+    .channel-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; position: relative; }
+    .channel-row--active { background: var(--primary-light); }
+    .channel-row--active::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: var(--primary); }
+    .channel-row:hover { background: var(--surface-2); }
+    .unread-badge { min-width: 18px; height: 18px; padding: 0 6px; border-radius: 9999px; background: var(--primary); color: var(--primary-contrast); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+    .verified-badge { width: 20px; height: 20px; border-radius: 9999px; background: var(--surface-elevated); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .verified-badge .ph { font-size: 13px; }
+    .message-bubble { background: var(--surface-elevated); border-radius: 16px; box-shadow: var(--shadow-1); padding: 12px 14px; }
+    .message-bubble--own { background: var(--primary-light); }
+    .presence-dot { width: 12px; height: 12px; border-radius: 9999px; background: var(--success); box-shadow: 0 0 0 2px var(--surface); }
+    .status-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
+
+    /* Side rail (branding.md) — the shared nav shell; included by in-frame screens */
+    .rail { flex: 0 0 56px; width: 56px; background: var(--surface-2); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: stretch; padding: 8px 6px; gap: 2px; }
+    .rail__item { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 8px; border-radius: 10px; color: var(--text-2); position: relative; text-decoration: none; font-size: 12px; }
+    .rail__item .ph { font-size: 22px; color: var(--text-2); }
+    .rail__item:hover { color: var(--text-1); background: var(--surface-2); }
+    .rail__item:hover .ph { color: var(--text-1); }
+    .rail__item--active { background: var(--primary-light); color: var(--text-1); }
+    .rail__item--active::before { content: ""; position: absolute; left: -6px; top: 6px; bottom: 6px; width: 3px; border-radius: 3px; background: var(--primary); }
+    .rail__item--active .ph { color: var(--primary); }
+    .rail__item--active span { color: var(--text-1); }
+    .rail__unread-dot { position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; border-radius: 9999px; background: var(--primary); }
+    .rail__unread-count { position: absolute; top: 6px; right: 6px; }
+    .rail__spacer { flex: 1; }
+
+    /* Amounts always JetBrains Mono, text-primary (branding.md Amount Text) */
+    .amount { font-family: var(--font-mono); color: var(--text-1); font-weight: 500; }
+
+    /* ===== base layout ===== */
+    body { margin: 0; background: var(--surface); color: var(--text-1); font-family: var(--font-body); }
+
+    .frame-phone { min-height: 100vh; display: flex; justify-content: center; align-items: center; background: #121110; }
+    .phone-bezel { position: relative; width: 390px; height: 844px; border-radius: 48px; background: #0C0B0A; padding: 12px; box-shadow: 0 24px 64px rgb(0 0 0 / .45); }
+    .phone-notch { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 120px; height: 28px; border-radius: 999px; background: #000; z-index: 20; }
+
+    .phone-screen { position: relative; width: 100%; height: 100%; border-radius: 38px; background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Mobile frames use iOS/Android overlay scrollbars: no native web scrollbar anywhere
+       inside the phone — app content, sheets, horizontal scrollers alike. */
+    .phone-screen, .phone-screen * { scrollbar-width: none; }
+    .phone-screen::-webkit-scrollbar,
+    .phone-screen *::-webkit-scrollbar { display: none; }
+
+    /* ready-made status bar — included automatically; screens never rebuild it */
+    .status-bar { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 24px; background: var(--surface); font-size: 13px; font-weight: 600; color: var(--text-1); }
+    .status-bar__icons { display: flex; align-items: center; gap: 6px; }
+    .status-bar .ph { font-size: 15px; color: var(--text-1); }
+
+    /* the app body fills the space between the status bar and the bottom nav, and scrolls.
+       It gets a definite height (fill the phone-screen minus the 44px status bar) so any
+       full-height state can reliably resolve height:100% against it. A state that wants to
+       fill the whole body uses h-full on its [data-state] root. */
+    .app-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; height: calc(100% - 44px); }
+
+    .frame-web { min-height: 100vh; background: var(--surface); color: var(--text-1); }
+    .page-root { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* ===== state display: only the active state is visible.
+       CSS hides every state except `loaded`, which shows with its NATURAL display from its
+       own class (so a full-height state that uses `flex`/`flex-col` keeps its flex layout —
+       never forced to block). After load, the state-picker JS takes over: it sets the active
+       state's inline display to '' (natural) and the rest to 'none'. ===== */
+    #screen-root > [data-state]:not([data-state="loaded"]) { display: none; }
+
+    /* ===== small building blocks ===== */
+    .page-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; }
+    .h1 { font-family: var(--font-display); font-size: 28px; font-weight: 700; line-height: 1.3; color: var(--text-1); }
+    .h2 { font-family: var(--font-display); font-size: 22px; font-weight: 600; line-height: 1.35; color: var(--text-1); }
+    .h3 { font-family: var(--font-display); font-size: 18px; font-weight: 600; line-height: 1.4; color: var(--text-1); }
+    .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-2); }
+    .avatar { width: 40px; height: 40px; border-radius: 999px; background: var(--primary-light); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+    .card-title { font-weight: 600; font-size: 14px; color: var(--text-1); margin-bottom: 8px; }
+    .feed { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .feed li { font-size: 14px; color: var(--text-2); }
+    .skeleton { background: var(--surface-2); border-radius: 8px; animation: pulse 1.4s ease-in-out infinite; }
+    .skeleton--title { width: 180px; height: 24px; }
+    .skeleton--card { height: 96px; margin: 0 16px 12px; }
+    .empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 64px 24px; text-align: center; }
+    .icon { width: 20px; height: 20px; flex-shrink: 0; }
+    .ph { line-height: 1; }
+
+    /* ===== review chrome ===== */
+    .review-chrome { position: fixed; top: 12px; right: 12px; z-index: 100; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); box-shadow: var(--shadow-2); font-size: 12px; color: var(--text-2); }
+    .review-chrome a { color: var(--primary); text-decoration: none; }
+    .review-chrome button, .review-chrome select { border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; background: var(--surface); color: var(--text-1); cursor: pointer; font-size: 12px; }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 0.8s linear infinite; }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+
+{% set frame = frame | default('phone') %}
+{% set screen_content %}
+  {% block screen %}{% endblock %}
+{% endset %}
+
+<body class="frame-{{ frame }}">
+  {% if frame == 'phone' %}
+  <div class="phone-bezel">
+    <div class="phone-notch" aria-hidden="true"></div>
+    <div class="phone-screen">
+      <div class="status-bar" aria-hidden="true">
+        <span class="status-bar__time">9:41</span>
+        <span class="status-bar__icons">
+          <i class="ph ph-signal-high"></i>
+          <i class="ph ph-wifi-high"></i>
+          <i class="ph ph-battery-full"></i>
+        </span>
+      </div>
+      <main id="screen-root" data-state="loaded" class="app-body">
+        {{ screen_content }}
+      </main>
+      {% block bottom_nav %}{% endblock %}
+    </div>
+  </div>
+  {% else %}
+  <main id="screen-root" data-state="loaded" class="page-root">
+    {{ screen_content }}
+  </main>
+  {% endif %}
+
+  {% include "partials/review-chrome.html" %}
+
+  <script>
+    (function () {
+      var html = document.documentElement;
+
+      /* review chrome hides itself inside the gallery's ?chrome=off iframes */
+      if (new URLSearchParams(location.search).has('chrome')) {
+        var chrome = document.querySelector('[data-chrome]');
+        if (chrome) chrome.remove();
+      }
+
+      /* the index's theme toggle propagates to this frame (same-origin postMessage) */
+      window.addEventListener('message', function (e) {
+        if (e.data && e.data.type === 'mockup-theme') {
+          var th = e.data.theme === 'dark' ? 'dark' : 'light';
+          html.dataset.theme = th;
+          var t = document.querySelector('[data-theme-toggle]');
+          if (t) {
+            t.setAttribute('aria-pressed', String(th === 'dark'));
+            t.textContent = th === 'dark' ? 'Dark' : 'Light';
+          }
+        }
+      });
+
+      /* theme toggle */
+      var toggle = document.querySelector('[data-theme-toggle]');
+      if (toggle) toggle.addEventListener('click', function () {
+        var dark = html.dataset.theme === 'dark';
+        html.dataset.theme = dark ? 'light' : 'dark';
+        toggle.setAttribute('aria-pressed', String(!dark));
+        toggle.textContent = dark ? 'Dark' : 'Light';
+      });
+
+      /* state picker: a dropdown of the [data-state] siblings in #screen-root.
+         Reveals the active state directly via inline styles, so custom state names
+         (e.g. "otp-sending", "modules-selected") work — not just the common set. */
+      var root = document.getElementById('screen-root');
+      var host = document.querySelector('[data-state-switcher]');
+      function setState(name) {
+        root.dataset.state = name;
+        Array.prototype.forEach.call(root.children, function (el) {
+          if (el.hasAttribute('data-state')) {
+            var active = (el.dataset.state === name);
+            // active: restore the element's natural display. Flex-col/flex states keep flex
+            // (so full-height flex layouts like the splash work); others default to block.
+            var show = active ? (el.classList.contains('flex') ? 'flex' : 'block') : 'none';
+            el.style.display = show;
+          }
+        });
+      }
+      if (root && host) {
+        var states = Array.prototype.map.call(
+          root.querySelectorAll(':scope > [data-state]'),
+          function (el) { return el.dataset.state; }
+        );
+        if (states.length > 1) {
+          var picker = document.createElement('select');
+          picker.className = 'state-picker';
+          picker.setAttribute('aria-label', 'Screen state');
+          states.forEach(function (name) {
+            var opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            picker.appendChild(opt);
+          });
+          picker.value = root.dataset.state;
+          picker.addEventListener('change', function () { setState(picker.value); });
+          host.appendChild(picker);
+        }
+      }
+      if (root) setState(root.dataset.state || 'loaded');
+
+      /* Back buttons ([data-behavior="back-step"]): switch the state picker to the
+         state named in data-back-to — generic and reusable across screens. */
+      Array.prototype.forEach.call(document.querySelectorAll('[data-behavior="back-step"]'), function (btn) {
+        btn.addEventListener('click', function () {
+          var target = btn.getAttribute('data-back-to');
+          var picker = document.querySelector('[data-state-switcher] select');
+          if (target && picker) {
+            picker.value = target;
+            picker.dispatchEvent(new Event('change'));
+          }
+        });
+      });
+
+      /* iOS-style fade-in scroll thumbs on the phone's scroll containers.
+         Screens can opt inner scrollers in with [data-scroll] (give them position: relative). */
+      Array.prototype.forEach.call(
+        document.querySelectorAll('.app-body, [data-scroll]'),
+        function (scroller) {
+          if (scroller.scrollHeight <= scroller.clientHeight) return;
+          var thumb = document.createElement('div');
+          thumb.style.cssText = 'position:absolute;right:2px;top:0;width:3px;border-radius:2px;background:var(--text-2);opacity:0;transition:opacity .2s;pointer-events:none;z-index:5;';
+          scroller.appendChild(thumb);
+          var timer;
+          scroller.addEventListener('scroll', function () {
+            var max = scroller.scrollHeight - scroller.clientHeight || 1;
+            var ratio = scroller.scrollTop / max;
+            thumb.style.top = (ratio * (scroller.clientHeight - 60)) + 'px';
+            thumb.style.height = Math.max(30, scroller.clientHeight * 0.15) + 'px';
+            thumb.style.opacity = '1';
+            clearTimeout(timer);
+            timer = setTimeout(function () { thumb.style.opacity = '0'; }, 800);
+          });
+        }
+      );
+    })();
+
+    /* branded placeholder SVG, colored from the current theme's tokens — shows only the slot label */
+    function PLACEHOLDER_SVG(label) {
+      var css = function (v) {
+        return getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+      };
+      var bg = css('--surface-2') || '#f5f4f2';
+      var fg = css('--text-2') || '#57534e';
+      var line = css('--border') || '#e7e5e4';
+      var primary = css('--primary') || '#a16207';
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">'
+        + '<rect width="100%" height="100%" fill="' + bg + '"/>'
+        + '<rect x="24" y="24" width="1152" height="627" fill="none" stroke="' + line + '" stroke-width="2" stroke-dasharray="10 10"/>'
+        + '<circle cx="600" cy="230" r="56" fill="' + primary + '" opacity="0.15"/>'
+        + '<text x="600" y="360" fill="' + fg + '" font-family="system-ui" font-size="30" font-weight="600" text-anchor="middle">' + label + '</text>'
+        + '</svg>';
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+  </script>
+</body>
+</html>

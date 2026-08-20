@@ -1,0 +1,393 @@
+{# Purpose: Create the account, verify the phone, build the channel, and choose modules —
+   one flow, four steps. A splash screen (logo + tagline) precedes the flow.
+   Screen: 01 · Onboarding   Route: /onboarding   Platform: Mobile
+   The ONLY screen OUTSIDE the Side Rail frame — no rail, no bottom nav (bottom_nav block left empty).
+   Flow: Splash → Phone (auth) → OTP → Channel → Modules.
+   Exit: Chats (02-chats) — next build; final CTAs use href="#" with a comment noting the target.
+   Entry: app install / deep link when unauthenticated (Authentication Gate per user_flow).
+   Edge cases noted inline: returning user, resend throttling, long-name clamp, avatar-upload
+   failure, app killed mid-flow. #}
+{% extends "base.html" %}
+
+{% set product_name = 'Pamoja' %}
+{% set screen_title = 'Onboarding' %}
+{% set screen_route = '/onboarding' %}
+{% set frame = 'phone' %}
+
+{% block title %}{{ product_name }} — {{ screen_title }}{% endblock %}
+
+{% block screen %}
+  {% import "macros/components.html" as c %}
+
+  {# Local step header — BAR style. Two distinct, separated parts, both sticky at the top:
+      1. AppBar (shown when `back` is true) — a compact header pinned close to the status
+         bar with the back button.
+      2. Progress card (always shown) — the segmented step bar with labels, sticky below the
+         appbar, separated from it by padding only (no divider line).
+     `active` = current step (1-4); segments up to `active` are filled gold.
+     `back_to` = the state name the back button switches to (wired by base.html's shared
+     [data-behavior="back-step"] handler).
+     Built from base utilities — no new tokens, no ad-hoc component styling. #}
+  {% macro step_indicator(active, back=false, back_to='') %}
+    <div class="sticky top-0 z-10 bg-surface">
+      {% if back %}
+        {# AppBar — back button sits tight to the top (minimal padding), no divider below #}
+        <div class="flex items-center justify-between px-2 pt-2">
+          <button type="button" class="flex items-center justify-center w-10 h-10 -ml-1 rounded-full text-text-1 hover:bg-surface-2 transition-colors"
+                  aria-label="Back to the previous step" data-behavior="back-step" data-back-to="{{ back_to }}">
+            {{ c.icon('arrow-left') }}
+          </button>
+        </div>
+      {% endif %}
+      {# Progress card — segmented step bar, separated from the appbar by spacing only #}
+      <div class="px-6 pt-3 pb-3 bg-surface">
+        <ol class="flex items-center gap-1.5" aria-label="Onboarding progress">
+          {% set steps = ['Phone', 'OTP', 'Channel', 'Modules'] %}
+          {% for step in steps %}
+            {% set idx = loop.index %}
+            <li class="flex-1">
+              <span class="block h-1.5 rounded-full transition-colors
+                {% if idx <= active %}bg-primary{% else %}bg-border{% endif %}"></span>
+              <span class="mt-1.5 block text-center text-[10px] tracking-wide
+                {% if idx == active %}text-text-1 font-semibold{% else %}text-text-3{% endif %}">{{ step }}</span>
+            </li>
+          {% endfor %}
+        </ol>
+      </div>
+    </div>
+  {% endmacro %}
+
+  {# Reusable selectable module card (Business / Social).
+     Compact card: icon chip + module title + checkbox + a short description of what the
+     module is about. The whole selected visual (border + bg + filled icon chip + filled
+     check badge) is driven by the real checkbox via peer-* classes, so clicking the card
+     or its checkbox highlights it, and select-all toggles them together. #}
+  {% macro module_card(name, icon_name, desc) %}
+    <label class="card p-4 text-left cursor-pointer transition-all w-full border-border
+      has-checked:border-primary has-checked:bg-primary-light has-checked:shadow-sm"
+      data-behavior="module-select">
+      <span class="flex items-center gap-3">
+        <span class="flex items-center justify-center w-10 h-10 rounded-xl
+          bg-surface-2 text-text-2 has-checked:bg-primary has-checked:text-primary-contrast">
+          {{ c.icon(icon_name) }}
+        </span>
+        <span class="flex-1 font-semibold text-text-1">{{ name }}</span>
+        <input type="checkbox" class="peer sr-only" aria-label="Select {{ name }} module"
+               data-module-checkbox>
+        <span class="flex items-center justify-center w-6 h-6 rounded-md border-2 border-border text-transparent
+          peer-checked:bg-primary peer-checked:border-primary peer-checked:text-primary-contrast
+          transition-colors">
+          {{ c.icon('check', 'ph-fill') }}
+        </span>
+      </span>
+      <p class="mt-3 text-sm text-text-2 leading-snug">{{ desc }}</p>
+    </label>
+  {% endmacro %}
+
+  {# =====================================================================
+     STATE: Splash (default). base.html only shows [data-state="loaded"]
+     by default (see the #screen-root CSS + state-picker JS), so the default
+     splash screen carries data-state="loaded".
+     App open → splash first: Pamoja logo centered in the screen,
+     tagline pinned to the bottom in small font.
+     ===================================================================== #}
+  <div data-state="loaded" class="h-full flex flex-col px-6">
+      <div class="flex-1 flex items-center justify-center">
+        {# Brand mark — Pamoja emblem/knot: custom brand icon, hand-authored inline SVG per
+           branding.md Logo Concept (two interlocking rounded shapes forming a "P").
+           Detached from the tagline — the emblem sits alone at the center of the screen. #}
+        <svg width="104" height="104" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+          <circle cx="40" cy="40" r="36" stroke="var(--primary)" stroke-width="3" opacity="0.35"/>
+          <path d="M30 16v48" stroke="var(--primary)" stroke-width="7" stroke-linecap="round"/>
+          <path d="M30 16h14c9 0 15 5 15 13s-6 13-15 13H30" stroke="var(--primary)" stroke-width="7" stroke-linecap="round" fill="none"/>
+          <path d="M40 34c7 2 12 7 13 16" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+        </svg>
+      </div>
+      <!-- sample copy: tagline from branding.md — small caption lifted a little above the bottom -->
+      <p class="text-center text-sm text-text-2 pb-16">Together is everything</p>
+    </div>
+
+  {# =====================================================================
+     STATE: Phone step (step 1 of the flow — phone auth). This screen
+     authenticates the user by phone number, so it carries a short intro
+     (what they're doing here), the phone input, and the Continue CTA.
+     ===================================================================== #}
+  <div data-state="phone-step" class="min-h-full flex flex-col">
+    {{ step_indicator(1) }}
+    <div class="flex-1 flex flex-col px-6 pb-8">
+      <div class="w-full mt-14 mb-auto flex flex-col items-center gap-6 text-center" style="max-width: 330px; margin-left: auto; margin-right: auto;">
+        {# Intro text: short, not bulky — tells the user what this step does. #}
+        <div class="flex flex-col gap-2">
+          <h2 class="h2">Enter your phone number</h2>
+          <!-- sample copy -->
+          <p class="text-sm text-text-2 leading-snug">We'll text you a code to verify it's you. It keeps your account safe and helps people find you on Pamoja.</p>
+        </div>
+        {# Illustrated moment (step 1) — asset slot, placeholder fallback until generated. #}
+        <div class="w-52 h-52 overflow-hidden rounded-2xl shadow-md [&_img]:w-full [&_img]:h-full [&_img]:object-cover">
+          {{ c.img_asset('assets/01-onboarding/step-phone.png',
+             'Two friends meeting at a market stall, one holding a phone showing a chat bubble',
+             'Flat vector illustration, square 1:1. Two friends meeting at a busy open-air West African market stall: warm smiling faces, one holds a phone showing a chat bubble, baskets of fruit and colorful fabric rolls behind them, a small shopfront awning. Warm near-black background #1C1917, gold #FBBF24 accents, terracotta #C2410C awning, teal #0F766E fabric details. Organic rounded shapes, soft shadows, gentle highlights, calm generous negative space, African-modern aesthetic, warm and crafted. No text, no letters, no logo, no watermark, no UI. Clean edges, suited to a dark UI.') }}
+        </div>
+        {# Phone input — large, mono, country-code prefixed. Submit → POST /api/register (mockup
+           renders only; no real request). #}
+        <label class="field w-full text-left">
+          <span class="field__label">Phone number</span>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-text-2" aria-hidden="true">+234</span>
+            <input class="input font-mono" style="font-size: 20px; padding-left: 64px; letter-spacing: 0.02em;"
+                   type="tel" name="phone" inputmode="tel" autocomplete="tel"
+                   placeholder="800 000 0000" value="">
+          </div>
+          <!-- sample copy: placeholder digits -->
+        </label>
+        {# In-flow Continue (advances to OTP step; not an exit point). Full width to match the input. #}
+        {{ c.btn('Continue', extra_class='w-full') }}
+        {# Edge case: app killed mid-flow → on relaunch, resume at the last completed step
+           (persisted locally; not shown — render-only mockup). #}
+      </div>
+    </div>
+  </div>
+
+  {# =====================================================================
+     STATE: OTP — type the 6-digit code, then Continue. One clean input
+     state (no sending/error sub-states per the design change).
+     ===================================================================== #}
+  <div data-state="otp" class="min-h-full flex flex-col">
+    {{ step_indicator(2, back=true, back_to='phone-step') }}
+    <div class="flex-1 flex flex-col px-6 pb-8">
+      <div class="w-full mt-14 mb-auto flex flex-col items-center gap-5 text-center" style="max-width: 330px; margin-left: auto; margin-right: auto;">
+        {# Same illustrated scene as the phone step, smaller (manifest note: one asset reused). #}
+        <div class="w-40 h-40 overflow-hidden rounded-2xl shadow-md [&_img]:w-full [&_img]:h-full [&_img]:object-cover">
+          {{ c.img_asset('assets/01-onboarding/step-phone.png',
+             'Two friends meeting at a market stall, one holding a phone showing a chat bubble',
+             'Flat vector illustration, square 1:1. Two friends meeting at a busy open-air West African market stall: warm smiling faces, one holds a phone showing a chat bubble, baskets of fruit and colorful fabric rolls behind them, a small shopfront awning. Warm near-black background #1C1917, gold #FBBF24 accents, terracotta #C2410C awning, teal #0F766E fabric details. Organic rounded shapes, soft shadows, gentle highlights, calm generous negative space, African-modern aesthetic, warm and crafted. No text, no letters, no logo, no watermark, no UI. Clean edges, suited to a dark UI.') }}
+        </div>
+        <h2 class="h2">Enter the code</h2>
+        <!-- sample copy: phone number masked in the middle for privacy -->
+        <p class="text-sm text-text-2">We texted a 6-digit code to +234 80****0000</p>
+        {# 6-digit code input — one real <input> per digit (data-behavior="otp-auto-advance").
+           Each cell is read-only and inactive by default; it only becomes active (editable,
+           primary border) when focused. Click a cell to activate it, type to advance, and
+           backspace to go back. #}
+        <div class="flex gap-2" role="group" aria-label="Verification code" data-behavior="otp-auto-advance">
+          {% for i in range(6) %}
+            <input type="tel" inputmode="numeric" maxlength="1" readonly
+                   class="w-11 h-14 rounded-xl border text-center font-mono text-xl bg-surface-2 text-text-3
+                     border-border cursor-pointer transition-colors
+                     focus:border-primary focus:text-text-1 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                   aria-label="Verification code digit {{ loop.index }}"
+                   autocomplete="one-time-code">
+          {% endfor %}
+        </div>
+        {# Resend — available from this state; countdown is implied (Edge case: resend
+           throttled after repeated failures — noted for the implementor). #}
+        {{ c.btn('Resend code', variant='ghost', href='#') }}
+        {# Continue — verifies the code and advances to Channel (new user). Returning
+           user: on OTP success the app skips Channel + Modules and lands straight on
+           Chats (02) — not shown here, noted for the implementor. #}
+        {{ c.btn('Continue', extra_class='w-full') }}
+      </div>
+    </div>
+  </div>
+
+  {# =====================================================================
+     STATE: Channel — "Make it yours": avatar picker, display name (required),
+     bio (optional), Save. This is the LOADED channel state (no error, no
+     spinner). A separate channel-error state can be added later.
+     ===================================================================== #}
+  <div data-state="channel" class="min-h-full flex flex-col">
+    {{ step_indicator(3, back=true, back_to='otp') }}
+    <div class="flex-1 flex flex-col px-6 pb-8">
+      <div class="w-full mt-14 mb-auto flex flex-col items-center gap-5 text-center" style="max-width: 330px; margin-left: auto; margin-right: auto;">
+        <h2 class="h2">Make it yours</h2>
+        {# Avatar picker — test data (user uploads their own at runtime; not an asset slot).
+           Edge case: if the upload fails, the channel saves without an avatar and the user
+           can retry later in 07-my-channel. #}
+        <div class="relative" data-behavior="avatar-upload">
+          <img src="https://api.dicebear.com/9.x/avataaars/svg?seed=amina"
+               alt="Avatar preview"
+               class="w-24 h-24 rounded-full bg-primary-light object-cover border border-border"
+               onerror="this.onerror=null; this.src = PLACEHOLDER_SVG('Avatar preview')">
+          <!-- test data: dicebear stylized avatar (public CDN), not final art -->
+          <span class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-contrast flex items-center justify-center"
+                role="button" aria-label="Change avatar">
+            {{ c.icon('camera', 'ph-fill') }}
+          </span>
+        </div>
+        <!-- sample copy -->
+        <p class="text-xs text-text-3">Tap to change</p>
+        <label class="field w-full text-left">
+          <span class="field__label">Display name <span style="color: var(--error);" aria-hidden="true">*</span></span>
+          <input class="input" type="text" name="display_name" maxlength="40"
+                 placeholder="e.g. Amina's Market" autocomplete="nickname" value="">
+        </label>
+        <label class="field w-full text-left">
+          <span class="field__label">Bio <span class="text-text-3">(optional)</span></span>
+          <textarea class="input" name="bio" rows="3" placeholder="What's your channel about?"
+                    style="height: auto; min-height: 88px; padding-top: 10px; resize: none;"></textarea>
+        </label>
+        {# POST /api/channel — loaded state: Save enabled, no spinner. #}
+        {{ c.btn('Save', extra_class='w-full') }}
+        {# Edge case: long display names clamp at 2 lines with ellipsis — noted for the
+           implementor (rendered by the real input's maxlength + line-clamp). #}
+      </div>
+    </div>
+  </div>
+
+  {# =====================================================================
+     STATE: Modules — pick any module (or all). Both cards start unselected
+     (icon chips share the unfilled surface style). Select-all convenience
+     checkbox above the cards toggles every card's selection together.
+     ===================================================================== #}
+  <div data-state="modules" class="min-h-full flex flex-col">
+    {{ step_indicator(4, back=true, back_to='channel') }}
+    <div class="flex-1 flex flex-col px-6 pb-8">
+      <div class="w-full mt-14 mb-auto flex flex-col items-center gap-5 text-center" style="max-width: 330px; margin-left: auto; margin-right: auto;">
+        <h2 class="h2">What do you want to use Pamoja for?</h2>
+        <!-- sample copy -->
+        <p class="text-sm text-text-2">Pick at least one module to continue. You can change this later.</p>
+        {# Select-all convenience: check to select every module at once. Wired by the
+           inline script below — checking it checks every module card, unchecking it
+           clears them all. #}
+        <label class="w-full flex items-center justify-center gap-2 text-sm font-medium text-text-1 cursor-pointer"
+               data-behavior="module-select-all">
+          <input type="checkbox" class="peer sr-only" aria-label="Select all modules"
+                 data-module-select-all>
+          <span class="flex items-center justify-center w-5 h-5 rounded-md border-2 border-border text-transparent
+            peer-checked:bg-primary peer-checked:border-primary peer-checked:text-primary-contrast
+            transition-colors">
+            {{ c.icon('check', 'ph-fill') }}
+          </span>
+          Select all modules
+        </label>
+        {# Module cards — icon, title, checkbox, short description (no sample-copy flag per
+           design note). Both start unselected (icon chips keep the unfilled surface style);
+           the select-all checkbox toggles them together. #}
+        {{ module_card('Business', 'briefcase',
+           'Sell and take orders — run your shop right from your channel.') }}
+        {{ module_card('Social', 'users-three',
+           'Chat, share updates, and grow your circle.') }}
+        {# Exit point → Chats (02-chats, next build): final CTA. Full width to match the cards. #}
+        {{ c.btn('Continue', href='#', extra_class='w-full') }}
+      </div>
+    </div>
+  </div>
+
+  {# =====================================================================
+     STATE: Offline — offline banner; submission blocked with "You're offline".
+     ===================================================================== #}
+  <div data-state="offline" class="min-h-full flex flex-col">
+    {# Offline banner. #}
+    <div class="mx-4 mt-4 flex items-center gap-2 rounded-xl border border-border bg-surface-2 px-4 py-2.5 text-sm text-text-2">
+      {{ c.icon('wifi-slash') }} <span>You're offline</span>
+    </div>
+    {{ step_indicator(1) }}
+    <div class="flex-1 flex flex-col px-6 pb-8">
+      <div class="w-full mt-14 mb-auto flex flex-col items-center gap-6 text-center" style="max-width: 330px; margin-left: auto; margin-right: auto;">
+        {# Intro text (same as the phone step) — tells the user what this step does. #}
+        <div class="flex flex-col gap-2">
+          <h2 class="h2">Enter your phone number</h2>
+          <!-- sample copy -->
+          <p class="text-sm text-text-2 leading-snug">We'll text you a code to verify it's you. It keeps your account safe and helps people find you on Pamoja.</p>
+        </div>
+        <div class="w-52 h-52 overflow-hidden rounded-2xl shadow-md [&_img]:w-full [&_img]:h-full [&_img]:object-cover">
+          {{ c.img_asset('assets/01-onboarding/step-phone.png',
+             'Two friends meeting at a market stall, one holding a phone showing a chat bubble',
+             'Flat vector illustration, square 1:1. Two friends meeting at a busy open-air West African market stall: warm smiling faces, one holds a phone showing a chat bubble, baskets of fruit and colorful fabric rolls behind them, a small shopfront awning. Warm near-black background #1C1917, gold #FBBF24 accents, terracotta #C2410C awning, teal #0F766E fabric details. Organic rounded shapes, soft shadows, gentle highlights, calm generous negative space, African-modern aesthetic, warm and crafted. No text, no letters, no logo, no watermark, no UI. Clean edges, suited to a dark UI.') }}
+        </div>
+        <label class="field w-full text-left">
+          <span class="field__label">Phone number</span>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-text-2" aria-hidden="true">+234</span>
+            <input class="input font-mono" style="font-size: 20px; padding-left: 64px; letter-spacing: 0.02em;"
+                   type="tel" name="phone" inputmode="tel" autocomplete="tel"
+                   placeholder="800 000 0000" value="" disabled>
+          </div>
+          <!-- sample copy: placeholder digits -->
+        </label>
+        {# Submission blocked while offline — button keeps the "Continue" label (as on the
+           phone step); the offline banner above already signals the state, so the button
+           is simply disabled. #}
+        <button type="button" class="btn btn-primary w-full" disabled>Continue</button>
+      </div>
+    </div>
+  </div>
+
+  {# Screen-local behavior: OTP active-on-focus + auto-advance, broken-image placeholder
+     safety net, and "Select all modules".
+     OTP: each digit is a real <input> but read-only/inactive until focused — focus makes it
+     active (editable), typing advances to the next cell, backspace on an empty cell returns
+     to the previous one, and blurring an empty cell returns it to the inactive state.
+     Placeholder safety net: the phone-step image is the first in the DOM and can error before
+     the shared PLACEHOLDER_SVG helper (defined at the bottom of base.html) is available, so
+     on load we re-apply the branded placeholder to any image that still points at a missing
+     asset — this keeps the phone-step placeholder consistent with the other states.
+     Select-all: checking it checks every module card; unchecking it clears them all. #}
+  <script>
+    (function () {
+      /* OTP: active only on focus + auto-advance */
+      Array.prototype.forEach.call(
+        document.querySelectorAll('[data-behavior="otp-auto-advance"]'),
+        function (group) {
+          var cells = Array.prototype.slice.call(group.querySelectorAll('input'));
+          cells.forEach(function (cell, i) {
+            /* activate (editable) on focus */
+            cell.addEventListener('focus', function () { cell.readOnly = false; });
+            /* deactivate on blur if empty */
+            cell.addEventListener('blur', function () { if (!cell.value) cell.readOnly = true; });
+            cell.addEventListener('input', function () {
+              if (cell.value && i < cells.length - 1) cells[i + 1].focus();
+            });
+            cell.addEventListener('keydown', function (e) {
+              if (e.key === 'Backspace' && !cell.value && i > 0) {
+                cells[i - 1].focus();
+              }
+            });
+            cell.addEventListener('paste', function (e) {
+              var text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+              if (!text) return;
+              e.preventDefault();
+              text.split('').slice(0, cells.length).forEach(function (ch, j) {
+                cells[j].value = ch;
+              });
+              cells[Math.min(text.length, cells.length) - 1].focus();
+            });
+          });
+        }
+      );
+
+      /* Placeholder safety net: re-apply the branded placeholder to any asset <img> that
+         failed to load (e.g. the first-on-DOM phone-step image erroring before the shared
+         PLACEHOLDER_SVG helper was defined). Runs on window load so the helper is available. */
+      window.addEventListener('load', function () {
+        Array.prototype.forEach.call(
+          document.querySelectorAll('img[data-asset]'),
+          function (img) {
+            if (typeof PLACEHOLDER_SVG !== 'function') return;
+            /* broken image: naturalWidth is 0 (or the src never resolved) */
+            if (!img.complete || img.naturalWidth === 0) {
+              img.onerror = null;
+              img.src = PLACEHOLDER_SVG(img.dataset.asset);
+            }
+          }
+        );
+      });
+
+      /* Select-all modules */
+      var selectAll = document.querySelector('[data-module-select-all]');
+      if (selectAll) {
+        var cards = Array.prototype.slice.call(document.querySelectorAll('[data-module-checkbox]'));
+        function syncSelectAll() {
+          selectAll.checked = cards.length > 0 && cards.every(function (c) { return c.checked; });
+        }
+        selectAll.addEventListener('change', function () {
+          cards.forEach(function (c) { c.checked = selectAll.checked; });
+        });
+        cards.forEach(function (c) { c.addEventListener('change', syncSelectAll); });
+      }
+    })();
+  </script>
+{% endblock %}
+
+{# Onboarding is the ONLY screen OUTSIDE the Side Rail — no rail, no bottom nav. #}
+{% block bottom_nav %}{% endblock %}
