@@ -61,9 +61,13 @@
      Compact card: icon chip + module title + checkbox + a short description of what the
      module is about. The whole selected visual (border + bg + filled icon chip + filled
      check badge) is driven by the real checkbox via peer-* classes, so clicking the card
-     or its checkbox highlights it, and select-all toggles them together. #}
-  {% macro module_card(name, icon_name, desc) %}
-    <label class="card p-4 text-left cursor-pointer transition-all w-full border-border
+     or its checkbox highlights it, and select-all toggles them together.
+     `selected` starts the card checked (used for modules that are on by default).
+     `locked` makes the card non-dismissible: the checkbox is always checked and disabled,
+     so the user cannot turn it off, and an "Always on" tag is shown. #}
+  {% macro module_card(name, icon_name, desc, selected=false, locked=false) %}
+    <label class="card p-4 text-left transition-all w-full border-border
+      {% if locked %}cursor-default{% else %}cursor-pointer{% endif %}
       has-checked:border-primary has-checked:bg-primary-light has-checked:shadow-sm"
       data-behavior="module-select">
       <span class="flex items-center gap-3">
@@ -71,16 +75,63 @@
           bg-surface-2 text-text-2 has-checked:bg-primary has-checked:text-primary-contrast">
           {{ c.icon(icon_name) }}
         </span>
-        <span class="flex-1 font-semibold text-text-1">{{ name }}</span>
+        <span class="flex-1 min-w-0">
+          <span class="block font-semibold text-text-1">{{ name }}</span>
+          {% if locked %}
+            <span class="inline-flex items-center gap-1 mt-0.5 text-[11px] font-medium text-text-3">
+              {{ c.icon('lock-simple') }} Always on
+            </span>
+          {% endif %}
+        </span>
         <input type="checkbox" class="peer sr-only" aria-label="Select {{ name }} module"
-               data-module-checkbox>
+               data-module-checkbox {% if selected or locked %}checked{% endif %}
+               {% if locked %}disabled{% endif %}>
         <span class="flex items-center justify-center w-6 h-6 rounded-md border-2 border-border text-transparent
           peer-checked:bg-primary peer-checked:border-primary peer-checked:text-primary-contrast
+          {% if locked %}opacity-70{% endif %}
           transition-colors">
           {{ c.icon('check', 'ph-fill') }}
         </span>
       </span>
       <p class="mt-3 text-sm text-text-2 leading-snug">{{ desc }}</p>
+    </label>
+  {% endmacro %}
+
+  {# Phone field — country-code dropdown + number input.
+     The country code is a real <select> of a few African country codes (more will be added
+     later); selecting one updates the +N prefix and keeps the number input padded to the
+     right of it. `disabled` is passed through for the offline state. #}
+  {% macro phone_field(disabled=false) %}
+    {% set codes = [
+      ('+234', 'Nigeria +234'),
+      ('+233', 'Ghana +233'),
+      ('+254', 'Kenya +254'),
+      ('+27',  'South Africa +27'),
+      ('+20',  'Egypt +20'),
+      ('+251', 'Ethiopia +251'),
+      ('+255', 'Tanzania +255'),
+      ('+256', 'Uganda +256')
+    ] %}
+    <label class="field w-full text-left">
+      <span class="field__label">Phone number</span>
+      <div class="relative">
+        <select class="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-[15px] text-text-1
+            bg-transparent appearance-none cursor-pointer outline-none"
+            aria-label="Country code" {% if disabled %}disabled{% endif %} data-behavior="country-code">
+          {% for code, label in codes %}
+            <option value="{{ code }}" {% if loop.first %}selected{% endif %}>{{ code }}</option>
+          {% endfor %}
+        </select>
+        {# caret icon — signals this is a dropdown (the select has appearance-none) #}
+        <span class="absolute left-[52px] top-1/2 -translate-y-1/2 text-text-3 pointer-events-none" aria-hidden="true">
+          {{ c.icon('caret-down', 'ph-fill') }}
+        </span>
+        <span class="absolute left-[68px] top-1/2 -translate-y-1/2 text-text-3 pointer-events-none" aria-hidden="true">|</span>
+        <input class="input font-mono" style="font-size: 20px; padding-left: 84px; letter-spacing: 0.02em;"
+               type="tel" name="phone" inputmode="tel" autocomplete="tel"
+               placeholder="800 000 0000" value="" {% if disabled %}disabled{% endif %}>
+      </div>
+      <!-- sample copy: country-code list is a few African codes for now; more added later -->
     </label>
   {% endmacro %}
 
@@ -128,18 +179,9 @@
              'Two friends meeting at a market stall, one holding a phone showing a chat bubble',
              'Flat vector illustration, square 1:1. Two friends meeting at a busy open-air West African market stall: warm smiling faces, one holds a phone showing a chat bubble, baskets of fruit and colorful fabric rolls behind them, a small shopfront awning. Warm near-black background #1C1917, gold #FBBF24 accents, terracotta #C2410C awning, teal #0F766E fabric details. Organic rounded shapes, soft shadows, gentle highlights, calm generous negative space, African-modern aesthetic, warm and crafted. No text, no letters, no logo, no watermark, no UI. Clean edges, suited to a dark UI.') }}
         </div>
-        {# Phone input — large, mono, country-code prefixed. Submit → POST /api/register (mockup
-           renders only; no real request). #}
-        <label class="field w-full text-left">
-          <span class="field__label">Phone number</span>
-          <div class="relative">
-            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-text-2" aria-hidden="true">+234</span>
-            <input class="input font-mono" style="font-size: 20px; padding-left: 64px; letter-spacing: 0.02em;"
-                   type="tel" name="phone" inputmode="tel" autocomplete="tel"
-                   placeholder="800 000 0000" value="">
-          </div>
-          <!-- sample copy: placeholder digits -->
-        </label>
+        {# Phone input — country-code dropdown + large mono number input. Submit →
+           POST /api/register (mockup renders only; no real request). #}
+        {{ phone_field() }}
         {# In-flow Continue (advances to OTP step; not an exit point). Full width to match the input. #}
         {{ c.btn('Continue', extra_class='w-full') }}
         {# Edge case: app killed mid-flow → on relaunch, resume at the last completed step
@@ -235,9 +277,10 @@
   </div>
 
   {# =====================================================================
-     STATE: Modules — pick any module (or all). Both cards start unselected
-     (icon chips share the unfilled surface style). Select-all convenience
-     checkbox above the cards toggles every card's selection together.
+     STATE: Modules — pick any module (or all). Social is always on (locked,
+     cannot be disabled) and listed first; Business is off and can be added.
+     Select-all convenience checkbox above the cards toggles the selectable
+     cards together (locked cards are never turned off).
      ===================================================================== #}
   <div data-state="modules" class="min-h-full flex flex-col">
     {{ step_indicator(4, back=true, back_to='channel') }}
@@ -245,10 +288,10 @@
       <div class="w-full mt-14 mb-auto flex flex-col items-center gap-5 text-center" style="max-width: 330px; margin-left: auto; margin-right: auto;">
         <h2 class="h2">What do you want to use Pamoja for?</h2>
         <!-- sample copy -->
-        <p class="text-sm text-text-2">Pick at least one module to continue. You can change this later.</p>
-        {# Select-all convenience: check to select every module at once. Wired by the
-           inline script below — checking it checks every module card, unchecking it
-           clears them all. #}
+        <p class="text-sm text-text-2">Start with Social — it's built in. Add others whenever you're ready.</p>
+        {# Select-all convenience: check to select every selectable module at once. Wired by
+           the inline script below — checking it checks every selectable card, unchecking it
+           clears them. Locked (always-on) cards are unaffected. #}
         <label class="w-full flex items-center justify-center gap-2 text-sm font-medium text-text-1 cursor-pointer"
                data-behavior="module-select-all">
           <input type="checkbox" class="peer sr-only" aria-label="Select all modules"
@@ -261,12 +304,12 @@
           Select all modules
         </label>
         {# Module cards — icon, title, checkbox, short description (no sample-copy flag per
-           design note). Both start unselected (icon chips keep the unfilled surface style);
-           the select-all checkbox toggles them together. #}
+           design note). Social comes first and is locked (always on — cannot be disabled);
+           Business is off and selectable. #}
+        {{ module_card('Social', 'users-three',
+           'Chat, share updates, and grow your circle.', locked=true) }}
         {{ module_card('Business', 'briefcase',
            'Sell and take orders — run your shop right from your channel.') }}
-        {{ module_card('Social', 'users-three',
-           'Chat, share updates, and grow your circle.') }}
         {# Exit point → Chats (02-chats, next build): final CTA. Full width to match the cards. #}
         {{ c.btn('Continue', href='#', extra_class='w-full') }}
       </div>
@@ -295,16 +338,8 @@
              'Two friends meeting at a market stall, one holding a phone showing a chat bubble',
              'Flat vector illustration, square 1:1. Two friends meeting at a busy open-air West African market stall: warm smiling faces, one holds a phone showing a chat bubble, baskets of fruit and colorful fabric rolls behind them, a small shopfront awning. Warm near-black background #1C1917, gold #FBBF24 accents, terracotta #C2410C awning, teal #0F766E fabric details. Organic rounded shapes, soft shadows, gentle highlights, calm generous negative space, African-modern aesthetic, warm and crafted. No text, no letters, no logo, no watermark, no UI. Clean edges, suited to a dark UI.') }}
         </div>
-        <label class="field w-full text-left">
-          <span class="field__label">Phone number</span>
-          <div class="relative">
-            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-text-2" aria-hidden="true">+234</span>
-            <input class="input font-mono" style="font-size: 20px; padding-left: 64px; letter-spacing: 0.02em;"
-                   type="tel" name="phone" inputmode="tel" autocomplete="tel"
-                   placeholder="800 000 0000" value="" disabled>
-          </div>
-          <!-- sample copy: placeholder digits -->
-        </label>
+        {# Phone input — country-code dropdown + number input, disabled while offline. #}
+        {{ phone_field(disabled=true) }}
         {# Submission blocked while offline — button keeps the "Continue" label (as on the
            phone step); the offline banner above already signals the state, so the button
            is simply disabled. #}
@@ -373,10 +408,13 @@
         );
       });
 
-      /* Select-all modules */
+      /* Select-all modules — only affects selectable (non-locked) cards. Locked/always-on
+         cards have a disabled checkbox and are excluded, so select-all never turns them off. */
       var selectAll = document.querySelector('[data-module-select-all]');
       if (selectAll) {
-        var cards = Array.prototype.slice.call(document.querySelectorAll('[data-module-checkbox]'));
+        var cards = Array.prototype.slice.call(
+          document.querySelectorAll('[data-module-checkbox]:not(:disabled)')
+        );
         function syncSelectAll() {
           selectAll.checked = cards.length > 0 && cards.every(function (c) { return c.checked; });
         }

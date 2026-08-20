@@ -13,10 +13,10 @@
 - Step indicator at top: Phone → OTP → Channel → Modules; stays fixed/sticky at the top while the step content scrolls
 - Each step is one full-height view; content is centered, generous spacing; illustrations appear only where noted below
 - Splash: Pamoja logo/emblem centered in the screen; tagline "Together is everything" as a small caption lifted just above the bottom
-- Phone step: "Enter your phone number" heading with the helper line "We'll text you a code to verify it's you.", illustrated scene, phone input (large, mono, country-code prefixed), Continue button
+- Phone step: "Enter your phone number" heading with the helper line "We'll text you a code to verify it's you.", illustrated scene, phone input with a country-code dropdown (a few African codes for now; more added later) plus a large mono number input, Continue button
 - OTP step: same illustrated scene (smaller), 6-digit code input with auto-advance (cells active only on focus), "Resend code" button, Continue button; helper text masks the phone number in the middle (e.g. +234 80****0000)
 - Channel step: "Make it yours" — avatar picker, display name (required), bio (optional). No illustrated scene — avatar + fields only
-- Modules step: selectable module cards (Business, Social), each with an icon, module title, a checkbox, and a short description of what the module is about; "Select all modules" convenience checkbox; hint copy "Pick at least one module to continue. You can change this later."
+- Modules step: module cards (Social first, always on/locked; Business second, selectable/off by default), each with an icon, module title, a checkbox, and a short description of what the module is about; more modules to be added later; "Select all modules" convenience checkbox that toggles only the selectable (non-locked) cards; hint copy "Start with Social — it's built in. Add others whenever you're ready."
 - Steps 2–4 (OTP, Channel, Modules) each show a back button in an appbar pinned close to the top, with the step progress bar below it; both the appbar and the progress bar stay sticky at the top while the step content scrolls; Phone step and Splash have no back button
 - Illustrated moments per [[branding]] Visual Asset Direction (designer-created scenes)
 
@@ -30,7 +30,7 @@
 | Avatar picker | IconButton + picker | Mobile | Channel avatar | User upload |
 | Name field | TextField | Mobile | Channel display name (required) | User input |
 | Bio field | TextField | Mobile | Channel bio (optional) | User input |
-| Module cards | Card (selectable) | Mobile | Business / Social opt-in; "Select all modules" checkbox | User selection |
+| Module cards | Card (selectable) | Mobile | Social (always on) / Business (selectable) opt-in; "Select all modules" toggles selectable cards | User selection |
 | Illustrations | Image (designer asset) | Mobile | Phone step scene only; brand style | Static assets |
 | Continue | Button | Mobile | Progress to next step | — |
 
@@ -58,7 +58,7 @@
 | **Phone step**            | Initial                   | Illustration, phone input, Continue                          |
 | **OTP**                   | Code entry                | 6-digit code input (active on focus), masked phone number (+234 80****0000), Resend code, Continue |
 | **Channel**               | Loaded                    | Avatar picker, display name, bio, Save (enabled)             |
-| **Modules**               | Selection in progress (default) | Module cards (icon + title + checkbox + short description), "Select all modules" checkbox toggles all, Continue |
+| **Modules**               | Selection in progress (default) | Social card (always on, locked), Business card (selectable), "Select all modules" toggles selectable cards, Continue |
 | **Offline**               | No connectivity           | Offline banner; Continue button shown but disabled           |
 
 **Edge Cases:**
