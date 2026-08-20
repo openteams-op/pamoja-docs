@@ -19,14 +19,14 @@
 
 ### Components
 
-| Component | Type | Platform | Purpose | Data Source |
-|---|---|---|---|---|
-| Side Rail | NavigationRail | Mobile | Persistent frame navigation | — |
-| Contact-sync prompt | Card | Mobile | First-run contact opt-in | Local state |
-| Conversation row | ListView tile | Mobile | Chat summary + unread | GET conversations |
-| New chat | IconButton | Mobile | Start new conversation / invite | — |
-| Contacts sheet | Sheet | Mobile | Connect / invite contacts | GET contact matches |
-| Empty illustration | Image (designer asset) | Mobile | Empty state | Static asset |
+| Component           | Type                   | Platform | Purpose                         | Data Source         |
+| ------------------- | ---------------------- | -------- | ------------------------------- | ------------------- |
+| Side Rail           | NavigationRail         | Mobile   | Persistent frame navigation     | —                   |
+| Contact-sync prompt | Card                   | Mobile   | First-run contact opt-in        | Local state         |
+| Conversation row    | ListView tile          | Mobile   | Chat summary + unread           | GET conversations   |
+| New chat            | IconButton             | Mobile   | Start new conversation / invite | —                   |
+| Contacts sheet      | Sheet                  | Mobile   | Connect / invite contacts       | GET contact matches |
+| Empty illustration  | Image (designer asset) | Mobile   | Empty state                     | Static asset        |
 
 ### Data Requirements
 
