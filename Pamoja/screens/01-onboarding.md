@@ -2,7 +2,7 @@
 
 **Route:** `/onboarding`
 **Platform:** Mobile
-**Purpose:** Create the account, verify the phone, build the channel, and choose modules — one flow, four steps.
+**Purpose:** Splash screen, then create the account, verify the phone, build the channel, and choose modules — one flow, four steps.
 **Entry Points:** App install; deep link when unauthenticated (per [[user_flow]] Authentication Gate).
 **Exit Points:** `[[02-chats|Chats]]` (first rail destination).
 
@@ -10,12 +10,14 @@
 
 **Mobile layout:**
 - Full-frame surface outside the Side Rail (the only screen not in the frame)
-- Step indicator at top: Phone → OTP → Channel → Modules
-- Each step is one full-height view; content is centered, generous spacing, one illustrated moment per step
-- Phone step: brand mark + tagline "Together is everything", illustrated scene, phone input (large, mono, country-code prefixed), Continue button
+- Step indicator at top: Phone → OTP → Channel → Modules; stays fixed/sticky at the top while the step content scrolls
+- Each step is one full-height view; content is centered, generous spacing; illustrations appear only where noted below
+- Splash: Pamoja logo/emblem centered in the screen; tagline "Together is everything" pinned as a small caption at the very bottom
+- Phone step: "Enter your phone number" heading with the helper line "We'll text you a code to verify it's you.", illustrated scene, phone input (large, mono, country-code prefixed), Continue button
 - OTP step: same illustrated scene (smaller), 6-digit code input with auto-advance, "Resend code" with countdown
-- Channel step: "Make it yours" — avatar picker, display name (required), bio (optional)
-- Modules step: two rich option cards (Business, Social) with illustrations, "Both" and "Skip" affordances
+- Channel step: "Make it yours" — avatar picker, display name (required), bio (optional). No illustrated scene — avatar + fields only
+- Modules step: selectable module cards (Business, Social), each with a small illustration and a one-line description; "Select all modules" convenience checkbox; hint copy "Pick at least one module to continue. You can change this later."
+- Steps 2–4 (OTP, Channel, Modules) each show a back button at the top that returns to the previous step; Phone step and Splash have no back button
 - Illustrated moments per [[branding]] Visual Asset Direction (designer-created scenes)
 
 ### Components
@@ -28,9 +30,9 @@
 | Avatar picker | IconButton + picker | Mobile | Channel avatar | User upload |
 | Name field | TextField | Mobile | Channel display name (required) | User input |
 | Bio field | TextField | Mobile | Channel bio (optional) | User input |
-| Module cards | Card (selectable) | Mobile | Business / Social opt-in | User selection |
-| Illustrations | Image (designer asset) | Mobile | One per step, brand style | Static assets |
-| Continue / Skip | Button | Mobile | Progress or skip | — |
+| Module cards | Card (selectable) | Mobile | Business / Social opt-in; "Select all modules" checkbox | User selection |
+| Illustrations | Image (designer asset) | Mobile | Phone step scene only, plus module card art; brand style | Static assets |
+| Continue | Button | Mobile | Progress to next step | — |
 
 ### Data Requirements
 
@@ -41,21 +43,22 @@
 - Module selection → activate modules
 
 **Data Flow:**
-1. Screen mounts → phone step
+1. Screen opens → splash → then phone step
 2. Submit phone → sending state → OTP step
 3. Submit OTP → verifying → on success, channel step (new user) or straight to Chats (returning user)
 4. Save channel → saving → modules step
-5. Choose/skip modules → land on Chats
+5. Choose at least one module (or select all) → land on Chats
+
+**Back navigation:** OTP back returns to the Phone step; Channel back returns to OTP; Modules back returns to Channel.
 
 ### States
 
 | State                     | Condition                 | What the User Sees                                           |
 | ------------------------- | ------------------------- | ------------------------------------------------------------ |
-| **Phone step**            | Initial                   | Brand mark, illustration, phone input, Continue              |
+| **Phone step**            | Initial                   | Illustration, phone input, Continue                          |
 | **OTP sending**           | Phone submitted           | Button spinner, resend countdown starts                      |
 | **OTP error**             | Wrong/expired code        | Inline error, "Resend code" enabled                          |
-| **Channel saving**        | Name/bio submitted        | Spinner; invalid → inline field errors                       |
-| **Channel saved-minimal** | Backed out with name only | Proceeds; bio/avatar can be completed in `[[07-my-channel]]` |
+| **Channel**               | Loaded                    | Avatar picker, display name, bio, Save (enabled)             |
 | **Modules selected**      | Selection made            | Selected cards highlighted; Continue enabled                 |
 | **Offline**               | No connectivity           | Offline banner; submission blocked with "You're offline"     |
 
